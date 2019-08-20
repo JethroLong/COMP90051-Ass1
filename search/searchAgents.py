@@ -452,9 +452,14 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    position, capsules, foodGrid = state
+    dist = [0]
+    for food_pos in foodGrid.asList():
+      start_state=problem.startingGameState
+      dist.append(mazeDistance(position, food_pos, start_state))
+    maxDist = max(dist)
+
+    return maxDist
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -540,3 +545,129 @@ def mazeDistance(point1, point2, gameState):
     assert not walls[x2][y2], 'point2 is a wall: ' + str(point2)
     prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
     return len(search.bfs(prob))
+
+############################################
+#        Capsule Search Problem            #
+#                                          #
+############################################
+
+class CapsuleSearchProblem(search.SearchProblem):
+    """
+       A capsule search problem associated with finding the a path that collects all of the
+       food (dots) later on in a Pacman game.
+
+       A search state in this problem is a tuple ( pacmanPosition, foodGrid ) where
+         pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
+         capsulePosition: a list of positions (x,y) of the remaining capsules.
+         foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
+       """
+
+    def __init__(self, startingGameState):
+        self.start = (startingGameState.getPacmanPosition(),
+                      startingGameState.getCapsules(), startingGameState.getFood())
+        self.walls = startingGameState.getWalls()
+        self.startingGameState = startingGameState
+        self._expanded = 0  # DO NOT CHANGE
+        self.heuristicInfo = {}  # A dictionary for the heuristic to store information
+
+    def getStartState(self):
+        return self.start
+
+    def isGoalState(self, state):
+        return len(state[1]) == 0 and state[2].count() == 0
+
+    def getSuccessors(self, state):
+        "Returns successor states, the actions they require, and a cost of 1."
+        successors = []
+        self._expanded += 1  # DO NOT CHANGE
+        for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = state[0]
+            dx, dy = Actions.directionToVector(direction)
+            nextx, nexty = int(x + dx), int(y + dy)
+            capsules = state[1]
+            if not self.walls[nextx][nexty] and len(capsules) > 0:
+                if not state[2].hasfood(nextx, nexty):
+                    successors.append((((nextx, nexty), capsules, state[2]), direction, 1))
+            elif not self.walls[nextx][nexty] and len(capsules) == 0:
+                nextFood = state[2].copy()
+                nextFood[nextx][nexty] = False
+                successors.append((((nextx, nexty), capsules, nextFood), direction, 1))
+
+        return successors
+
+    def getCostOfActions(self, actions):
+        """Returns the cost of a particular sequence of actions.  If those actions
+        include an illegal move, return 999999"""
+        x, y = self.getStartState()[0]
+        cost = 0
+        for action in actions:
+            # figure out the next state and see whether it's legal
+            dx, dy = Actions.directionToVector(action)
+            x, y = int(x + dx), int(y + dy)
+            if self.walls[x][y]:
+                return 999999
+            cost += 1
+        return cost
+
+
+class CapsuleSearchAgent(SearchAgent):
+    "A SearchAgent for CapsuleSearchProblem using Weighted A* and your foodHeuristic"
+
+    def __init__(self, fn='waStarSearch', prob='CapsuleSearchProblem', heuristic='foodHeuristic'):
+
+        # Get the search function from the name and heuristic
+        if fn not in dir(search):
+            raise AttributeError(fn + ' is not a search function in search.py.')
+        func = getattr(search, fn)
+        if 'heuristic' not in func.__code__.co_varnames:
+            print('[SearchAgent] using function ' + fn)
+            self.searchFunction = func
+        else:
+            if heuristic in globals().keys():
+                heur = globals()[heuristic]
+            elif heuristic in dir(search):
+                heur = getattr(search, heuristic)
+            else:
+                raise AttributeError(heuristic + ' is not a function in searchAgents.py or search.py.')
+            print('[SearchAgent] using function %s and heuristic %s' % (fn, heuristic))
+            # Note: this bit of Python trickery combines the search algorithm and the heuristic
+            self.searchFunction = lambda x: func(x, heuristic=heur)
+
+        # Get the search problem type from the name
+        if prob not in globals().keys() or not prob.endswith('Problem'):
+            raise AttributeError(prob + ' is not a search problem type in SearchAgents.py.')
+        self.searchType = globals()[prob]
+        print('[SearchAgent] using problem type ' + prob)
+
+    def registerInitialState(self, state):
+        """
+        This is the first time that the agent sees the layout of the game
+        board. Here, we choose a path to the goal. In this phase, the agent
+        should compute the path to the goal and store it in a local variable.
+        All of the work is done in this method!
+
+        state: a GameState object (pacman.py)
+        """
+        if self.searchFunction == None: raise Exception("No search function provided for SearchAgent")
+        starttime = time.time()
+        problem = self.searchType(state)  # Makes a new search problem
+        self.actions = self.searchFunction(problem)  # Find a path
+        totalCost = problem.getCostOfActions(self.actions)
+        print('Path found with total cost of %d in %.1f seconds' % (totalCost, time.time() - starttime))
+        if '_expanded' in dir(problem): print('Search nodes expanded: %d' % problem._expanded)
+
+    def getAction(self, state):
+        """
+        Returns the next action in the path chosen earlier (in
+        registerInitialState).  Return Directions.STOP if there is no further
+        action to take.
+
+        state: a GameState object (pacman.py)
+        """
+        if 'actionIndex' not in dir(self): self.actionIndex = 0
+        i = self.actionIndex
+        self.actionIndex += 1
+        if i < len(self.actions):
+            return self.actions[i]
+        else:
+            return Directions.STOP
