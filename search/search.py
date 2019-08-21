@@ -161,33 +161,33 @@ def iterativeDeepeningSearch(problem):
 
     limit = 1
     while True:
-        for depth in range(limit):
-            # Initialization
-            open = util.Stack()
-            open.push(initState)
-            closed = set()
+        # Initialization
+        open = util.Stack()
+        open.push(initState)
+        closed = set()
 
-            while not open.isEmpty() and depth <= limit:
-                currState = open.pop()
-                # print("Current state: ", currState)
-                currPos = currState[0]
-                currPath = currState[1]
-                currCost = currState[2]
+        depth = 1
+        while not open.isEmpty() and depth <= limit:
+            currState = open.pop()
+            # print("Current state: ", currState)
+            currPos = currState[0]
+            currPath = currState[1]
+            currCost = currState[2]
 
-                if problem.isGoalState(currPos):
-                    currPath.append('Stop')
-                    closed.add(currPos)
-                    return currPath[1:]
-                else:
-                    closed.add(currPos)
+            if problem.isGoalState(currPos):
+                currPath.append('Stop')
+                closed.add(currPos)
+                return currPath[1:]
+            else:
+                closed.add(currPos)
 
-                successors = problem.getSuccessors(currPos)
-                if len(successors) > 0:
-                    depth += 1
-                    for each in successors:
-                        if each[0] not in closed:
-                            temp = (each[0], currPath + [each[1]], currCost + each[2])
-                            open.push(temp)
+            successors = problem.getSuccessors(currPos)
+            if len(successors) > 0:
+                depth += 1
+                for each in successors:
+                    if each[0] not in closed:
+                        temp = (each[0], currPath + [each[1]], currCost + each[2])
+                        open.push(temp)
         limit += 1
 
 
