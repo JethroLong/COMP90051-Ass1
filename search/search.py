@@ -147,46 +147,45 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "*** YOUR CODE HERE IF YOU WANT TO PRACTICE ***"
     util.raiseNotDefined()
 
+
 def iterativeDeepeningSearch(problem):
     """Search the deepest node in an iterative manner."""
     "*** YOUR CODE HERE FOR TASK 1 ***"
 
     # Retrieve the init state
-    initState = (problem.getStartState(), ['Stop'], 0)
+    # state model ( (position, depth), path, cost)
+    initState = ( (problem.getStartState(), 0) , ['Stop'], 0)
 
-    # Initial check
-    if problem.isGoalState(initState[0]):
-        # path constants specified in class Directions in game.py
-        return initState[1]
-
-    limit = 1
+    limit = 0
     while True:
         # Initialization
         open = util.Stack()
         open.push(initState)
-        closed = set()
+        closed = {}
 
-        depth = 1
-        while not open.isEmpty() and depth <= limit:
+        while not open.isEmpty():
             currState = open.pop()
-            # print("Current state: ", currState)
-            currPos = currState[0]
+            currPos = currState[0][0]
+            currDepth = currState[0][1]
             currPath = currState[1]
             currCost = currState[2]
 
+            # print("current state: ", currState)
+            # print("limit: ", limit)
             if problem.isGoalState(currPos):
                 currPath.append('Stop')
-                closed.add(currPos)
+                closed[currPos] = currCost
                 return currPath[1:]
             else:
-                closed.add(currPos)
+                closed[currPos] = currCost
 
             successors = problem.getSuccessors(currPos)
-            if len(successors) > 0:
-                depth += 1
+            nextDepth = currDepth + 1
+            if len(successors) > 0 and nextDepth <= limit:
                 for each in successors:
-                    if each[0] not in closed:
-                        temp = (each[0], currPath + [each[1]], currCost + each[2])
+                    nextCost = currCost + each[2]
+                    if each[0] not in closed.keys() or nextCost < closed[each[0]]:
+                        temp = ( (each[0], nextDepth), currPath + [each[1]], nextCost)
                         open.push(temp)
         limit += 1
 
