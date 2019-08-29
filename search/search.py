@@ -109,26 +109,50 @@ def depthFirstSearch(problem):
         currCost = currState[2]
 
         if problem.isGoalState(currPos):
-            currPath.append('Stop')
             closed.add(currPos)
             return currPath[1:]
         else:
             closed.add(currPos)
-
         successors = problem.getSuccessors(currPos)
         if len(successors) > 0:
             for each in successors:
                 if each[0] not in closed:
                     temp = (each[0], currPath+[each[1]], currCost+each[2])
                     open.push(temp)
-
     return False
 
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE IF YOU WANT TO PRACTICE ***"
-    util.raiseNotDefined()
+    # Initialize a stack
+    open = util.Queue()
+
+    # Retrieve the init state
+    init = (problem.getStartState(), ['Stop'], 0)
+    open.push(init)
+    closed = set()
+
+    while not open.isEmpty():
+        currNode = open.pop()
+        currState = currNode[0]
+        currPath = currNode[1]
+        currCost = currNode[2]
+
+        if problem.isGoalState(currState):
+            closed.add(currState)
+            return currPath[1:]
+        else:
+            closed.add(currState)
+
+        successors = problem.getSuccessors(currState)
+        if len(successors) > 0:
+            for each in successors:
+                if each[0] not in closed:
+                    temp = (each[0], currPath + [each[1]], currCost + each[2])
+                    open.push(temp)
+    return False
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
@@ -170,10 +194,7 @@ def iterativeDeepeningSearch(problem):
             currPath = currState[1]
             currCost = currState[2]
 
-            # print("current state: ", currState)
-            # print("limit: ", limit)
             if problem.isGoalState(currPos):
-                currPath.append('Stop')
                 closed[currPos] = currCost
                 return currPath[1:]
             else:
@@ -200,36 +221,32 @@ def waStarSearch(problem, heuristic=nullHeuristic):
     open = util.PriorityQueueWithFunction(priorityFunc)
 
     # Retrieve the init state
-    initState = (problem.getStartState(), ['Stop'], 0)
-    open.push(initState)
-    closed = set()
+    init = (problem.getStartState(), ['Stop'], 0)
+    open.push(init)
     bestG = {
         # initState[0]: initState[2]
     }
 
     while not open.isEmpty():
 
-        currState = open.pop()
-        # print("current state: ", currState)
-        currPos = currState[0]
-        currPath = currState[1]
-        currPathCost = currState[2]
+        currNode = open.pop()
+        currState = currNode[0]
+        currPath = currNode[1]
+        currPathCost = currNode[2]
 
-        if (currPos not in closed) or (currPathCost < bestG[currPos]):
-            closed.add(currPos)
-            bestG[currPos] = currPathCost
+        if problem.isGoalState(currState):
+            return currPath[1:]
+        successors = problem.getSuccessors(currState)
 
-            if problem.isGoalState(currPos):
-                return currPath
+        if len(successors) > 0:
+            for each in successors:
+                newPos = each[0]
+                newPathCost = currPathCost + each[2]
 
-            successors = problem.getSuccessors(currPos)
-            if len(successors) > 0:
-                for each in successors:
-                    newPathCost = currPathCost + each[2]
+                if newPos not in bestG.keys() or newPathCost < bestG[newPos]:
+                    bestG[newPos] = newPathCost
                     temp = (each[0], currPath + [each[1]], newPathCost)
-
                     hval = heuristic(each[0], problem)
-
                     if hval < float('inf'):
                         open.push(temp)
 
