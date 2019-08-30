@@ -92,14 +92,8 @@ def depthFirstSearch(problem):
 
     # Retrieve the init state
     initState = (problem.getStartState(), ['Stop'], 0)
-
-    # Initial check
-    if problem.isGoalState(initState[0]):
-        # path constants specified in class Directions in game.py
-        return initState[1]
-
     open.push(initState)
-    closed = set()
+    closed = []
 
     while not open.isEmpty():
         currState = open.pop()
@@ -109,16 +103,16 @@ def depthFirstSearch(problem):
         currCost = currState[2]
 
         if problem.isGoalState(currPos):
-            closed.add(currPos)
             return currPath[1:]
         else:
-            closed.add(currPos)
-        successors = problem.getSuccessors(currPos)
-        if len(successors) > 0:
-            for each in successors:
-                if each[0] not in closed:
-                    temp = (each[0], currPath+[each[1]], currCost+each[2])
-                    open.push(temp)
+            closed.append(currPos)
+        if currState not in closed:
+            successors = problem.getSuccessors(currPos)
+            if len(successors) > 0:
+                for each in successors:
+                    if each[0] not in closed:
+                        temp = (each[0], currPath+[each[1]], currCost+each[2])
+                        open.push(temp)
     return False
 
 
@@ -131,8 +125,7 @@ def breadthFirstSearch(problem):
     # Retrieve the init state
     init = (problem.getStartState(), ['Stop'], 0)
     open.push(init)
-    closed = set()
-
+    closed = []
     while not open.isEmpty():
         currNode = open.pop()
         currState = currNode[0]
@@ -140,17 +133,16 @@ def breadthFirstSearch(problem):
         currCost = currNode[2]
 
         if problem.isGoalState(currState):
-            closed.add(currState)
             return currPath[1:]
         else:
-            closed.add(currState)
-
-        successors = problem.getSuccessors(currState)
-        if len(successors) > 0:
-            for each in successors:
-                if each[0] not in closed:
-                    temp = (each[0], currPath + [each[1]], currCost + each[2])
-                    open.push(temp)
+            if currState not in closed:
+                closed.append(currState)
+                successors = problem.getSuccessors(currState)
+                if len(successors) > 0:
+                    for each in successors:
+                        if each[0] not in closed:
+                            temp = (each[0], currPath + [each[1]], currCost + each[2])
+                            open.push(temp)
     return False
 
 
@@ -195,7 +187,6 @@ def iterativeDeepeningSearch(problem):
             currCost = currState[2]
 
             if problem.isGoalState(currPos):
-                closed[currPos] = currCost
                 return currPath[1:]
             else:
                 closed[currPos] = currCost
@@ -211,28 +202,28 @@ def iterativeDeepeningSearch(problem):
         limit += 1
 
 
-def waStarSearch(problem, heuristic=nullHeuristic):
+def waStarSearch2(problem, heuristic=nullHeuristic):
     """Search the node that has has the weighted (x 2) lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE FOR TASK 2 ***"
 
     priorityFunc = lambda x: x[2] + 2*heuristic(x[0], problem)
 
     # initialize a priority queue
-    open = util.PriorityQueueWithFunction(priorityFunc)
+    open = util.PriorityQueue()
 
     # Retrieve the init state
     init = (problem.getStartState(), ['Stop'], 0)
-    open.push(init)
+    open.push(init, priorityFunc(init))
     bestG = {
         # initState[0]: initState[2]
     }
-
     while not open.isEmpty():
 
         currNode = open.pop()
         currState = currNode[0]
         currPath = currNode[1]
         currPathCost = currNode[2]
+        # print("State: ", currState)
 
         if problem.isGoalState(currState):
             return currPath[1:]
@@ -248,7 +239,43 @@ def waStarSearch(problem, heuristic=nullHeuristic):
                     temp = (each[0], currPath + [each[1]], newPathCost)
                     hval = heuristic(each[0], problem)
                     if hval < float('inf'):
-                        open.push(temp)
+                        open.update(temp, priorityFunc(temp))
+
+    return False
+
+
+def waStarSearch(problem, heuristic=nullHeuristic):
+    """Search the node that has has the weighted (x 2) lowest combined cost and heuristic first."""
+    "*** YOUR CODE HERE FOR TASK 2 ***"
+    priorityFunc = lambda x: x[2] + 2*heuristic(x[0], problem)
+
+    # initialize a priority queue
+    open = util.PriorityQueue()
+    closed = []
+
+    # Retrieve the init state
+    init = (problem.getStartState(), ['Stop'], 0)
+    open.push(init, priorityFunc(init))
+    while not open.isEmpty():
+        currNode = open.pop()
+        currState = currNode[0]
+        currPath = currNode[1]
+        currPathCost = currNode[2]
+        # print("State: ", currState)
+        if problem.isGoalState(currState):
+            return currPath[1:]
+        else:
+            closed.append(currState)
+        successors = problem.getSuccessors(currState)
+
+        if len(successors) > 0:
+            for each in successors:
+                newPos = each[0]
+                newPathCost = currPathCost + each[2]
+
+                if newPos not in closed:
+                    temp = (each[0], currPath + [each[1]], newPathCost)
+                    open.update(temp, priorityFunc(temp))
 
     return False
 
@@ -261,3 +288,4 @@ astar = aStarSearch
 ucs = uniformCostSearch
 ids = iterativeDeepeningSearch
 wastar = waStarSearch
+wastar2 = waStarSearch2
