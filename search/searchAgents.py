@@ -466,6 +466,9 @@ def foodHeuristic(state, problem):
 
 
 def foodHeuristic2(state, problem):
+    """
+    Heuristic functiono devoted to "CapsuleSearchProblem2"
+    """
     capsules = problem.capsules
     foodGrid = problem.foodGrid
     walls = problem.walls
@@ -621,9 +624,14 @@ def mazeDistance(point1, point2, gameState):
     return len(search.bfs(prob))
 
 
-###########################################
-#       Capsule Search Problem            #
-###########################################
+#######################################################################
+#                      Capsule Search Problem                         #
+# --------------------------------------------------------------------#
+# Test Command:                                                       #
+#  python3 pacman.py -l capsuleSearch -p CapsuleSearchAgent -a        #
+#   fn=wastar,prob=CapsuleSearchProblem,heuristic=foodHeuristic       #
+#######################################################################
+
 class CapsuleSearchProblem(search.SearchProblem):
     """
        A capsule search problem associated with finding the a path that collects all of the
@@ -697,9 +705,14 @@ class CapsuleSearchAgent(SearchAgent):
     pass
 
 
-###########################################
-#    Capsule Search Problem (Version2)    #
-###########################################
+#######################################################################
+#                Capsule Search Problem (Version2)                    #
+# --------------------------------------------------------------------#
+# Test Command:                                                       #
+#  python3 pacman.py -l capsuleSearch -p CapsuleSearchAgent2 -a       #
+#   fn=wastar2,prob=CapsuleSearchProblem2,heuristic=foodHeuristic2    #
+#######################################################################
+
 class CapsuleSearchProblem2(PositionSearchProblem):
     """
        A different Strategy compared to CapsuleSearchProblem
