@@ -97,7 +97,6 @@ def depthFirstSearch(problem):
 
     while not open.isEmpty():
         currState = open.pop()
-        # print("Current state: ", currState)
         currPos = currState[0]
         currPath = currState[1]
         currCost = currState[2]
@@ -171,10 +170,9 @@ def iterativeDeepeningSearch(problem):
     # Retrieve the init state
     # state model ( (position, depth), path, cost)
     initState = ( (problem.getStartState(), 0) , ['Stop'], 0)
-
     limit = 0
     while True:
-        # Initialization
+        # Initialization each iteration
         open = util.Stack()
         open.push(initState)
         closed = {}
@@ -201,52 +199,13 @@ def iterativeDeepeningSearch(problem):
                         open.push(temp)
         limit += 1
 
-
-def waStarSearch2(problem, heuristic=nullHeuristic):
-    """Search the node that has has the weighted (x 2) lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE FOR TASK 2 ***"
-
-    priorityFunc = lambda x: x[2] + 2*heuristic(x[0], problem)
-
-    # initialize a priority queue
-    open = util.PriorityQueue()
-
-    # Retrieve the init state
-    init = (problem.getStartState(), ['Stop'], 0)
-    open.push(init, priorityFunc(init))
-    bestG = {
-        # initState[0]: initState[2]
-    }
-    while not open.isEmpty():
-
-        currNode = open.pop()
-        currState = currNode[0]
-        currPath = currNode[1]
-        currPathCost = currNode[2]
-        # print("State: ", currState)
-
-        if problem.isGoalState(currState):
-            return currPath[1:]
-        successors = problem.getSuccessors(currState)
-
-        if len(successors) > 0:
-            for each in successors:
-                newPos = each[0]
-                newPathCost = currPathCost + each[2]
-
-                if newPos not in bestG.keys() or newPathCost < bestG[newPos]:
-                    bestG[newPos] = newPathCost
-                    temp = (each[0], currPath + [each[1]], newPathCost)
-                    hval = heuristic(each[0], problem)
-                    if hval < float('inf'):
-                        open.update(temp, priorityFunc(temp))
-
     return False
 
 
 def waStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has has the weighted (x 2) lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE FOR TASK 2 ***"
+
     priorityFunc = lambda x: x[2] + 2*heuristic(x[0], problem)
 
     # initialize a priority queue
@@ -261,7 +220,6 @@ def waStarSearch(problem, heuristic=nullHeuristic):
         currState = currNode[0]
         currPath = currNode[1]
         currPathCost = currNode[2]
-        # print("State: ", currState)
         if problem.isGoalState(currState):
             return currPath[1:]
         else:
@@ -280,6 +238,48 @@ def waStarSearch(problem, heuristic=nullHeuristic):
     return False
 
 
+def waStarSearch2(problem, heuristic=nullHeuristic):
+    """
+    Search the node that has has the weighted (x 2) lowest combined cost and heuristic first.
+    this is an another weighted A* search algorithm version with reopening.
+
+    This version works with "CapsuleSearchProblem2", "foodHeuristic2" and "CapsuleSearchAgent2" for TASK 3
+    This can find a solution that satisfies the capsule-food constraint with expanding
+    incredibly less nodes.
+
+    """
+    priorityFunc = lambda x: x[2] + 2*heuristic(x[0], problem)
+
+    # initialize a priority queue
+    open = util.PriorityQueue()
+
+    # Retrieve the init state
+    init = (problem.getStartState(), ['Stop'], 0)
+    open.push(init, priorityFunc(init))
+    bestG = {}
+    while not open.isEmpty():
+
+        currNode = open.pop()
+        currState = currNode[0]
+        currPath = currNode[1]
+        currPathCost = currNode[2]
+
+        if problem.isGoalState(currState):
+            return currPath[1:]
+        successors = problem.getSuccessors(currState)
+
+        if len(successors) > 0:
+            for each in successors:
+                newPos = each[0]
+                newPathCost = currPathCost + each[2]
+                if newPos not in bestG.keys() or newPathCost < bestG[newPos]:
+                    bestG[newPos] = newPathCost
+                    temp = (each[0], currPath + [each[1]], newPathCost)
+                    hval = heuristic(each[0], problem)
+                    if hval < float('inf'):
+                        open.update(temp, priorityFunc(temp))
+
+    return False
 
 # Abbreviations
 bfs = breadthFirstSearch

@@ -429,6 +429,7 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -457,34 +458,24 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    # capsules = problem.capsules
-    # foodGrid = problem.foodGrid
-    # walls = problem.walls
-    gameState = problem.startingGameState
-    # print("state: {}, {}, {}".format(state[0], state[1], state[2].asList()))
-
     state, capsules, foodGrid = state
-    # dists = []
-    # for fstFood in foodGrid.asList():
-    #     for sndFood in foodGrid.asList():
-    #         dist = mazeDistance(fstFood, sndFood, gameState)
-    #         if dist != 0: dists.append(dist)
-    # currentConstCost = max(dists)
-    # print("state: ", state)
-    # print("capsules: {}, food count: {} ".format(capsules, foodGrid.count()))
+
+    h = heuristicGeneral(state, foodGrid)
+    capsuleCoefficient = len(capsules)*0.5 + 1   # this should no less than 1
+    return h*capsuleCoefficient
 
 
-    # if len(capsules) != 0:
-    #     h = heuristicGeneral(state, capsules, gameState)
-    # else:
-    #     h = heuristicGeneral(state, foodGrid.asList(), gameState)
-    #
-    # # print("Heuristic: ", h, "\n")
-    # return (len(capsules) + 1)*h
+def foodHeuristic2(state, problem):
+    capsules = problem.capsules
+    foodGrid = problem.foodGrid
+    walls = problem.walls
+    gameState = problem.startingGameState
 
-    h = heuristicGeneral(state, foodGrid.asList())
-    print("Heuristic: ", h*(len(capsules)+1), "\n")
-    return h*(len(capsules)+1)
+    if len(capsules) != 0:
+        h = heuristicGeneral2(state, capsules, gameState)
+    else:
+        h = heuristicGeneral2(state, foodGrid.asList(), gameState)
+    return h
 
 
 def heuristicGeneral(pos, goals):
@@ -511,14 +502,9 @@ def heuristicGeneral2(pos, goals, gameState):
         dists = []
         for fstFood in goals:
             for sndFood in goals:
-                # dist = mazeDistance(fstFood, sndFood, gameState)
-                dist = manhattanDistance(fstFood, sndFood)
+                dist = mazeDistance(fstFood, sndFood, gameState)
                 if dist != 0: dists.append(dist)
         currentConstCost = max(dists)
-        #
-        # furthestP1, distP1 = furthestUnvisitedGoal(pos, goals, gameState)
-        # furthestP2, distP1_P2 = furthestUnvisitedGoal(furthestP1, goals, gameState)
-        # distP1_P2 = mazeDistance(furthestP1, furthestP2, gameState)
 
         nearestGoal, distNearestGoal = nearestUnvisitedGoal(pos, goals, gameState)
         distCombo = currentConstCost + distNearestGoal
@@ -532,8 +518,7 @@ def manhattanDistance(start, goal):
 def nearestUnvisitedGoal(pos, goals, gameState):
     dists = []
     for goal in goals:
-        # d = mazeDistance(pos, goal, gameState)
-        d = manhattanDistance(pos, goal)
+        d = mazeDistance(pos, goal, gameState)
         dists.append((goal, d))
     dists.sort(key=lambda x: x[-1])
     return dists[0]
@@ -554,7 +539,7 @@ class ClosestDotSearchAgent(SearchAgent):
         self.actions = []
         currentState = state
         while(currentState.getFood().count() > 0):
-            nextPathSegment = self.findPathToClosestDot(currentState) # The missing piece
+            nextPathSegment = self.findPathToClosestDot(currentState)
             self.actions += nextPathSegment
             for action in nextPathSegment:
                 legal = currentState.getLegalActions()
@@ -639,7 +624,6 @@ def mazeDistance(point1, point2, gameState):
 ###########################################
 #       Capsule Search Problem            #
 ###########################################
-
 class CapsuleSearchProblem(search.SearchProblem):
     """
        A capsule search problem associated with finding the a path that collects all of the
@@ -648,62 +632,26 @@ class CapsuleSearchProblem(search.SearchProblem):
        A search state in this problem is a tuple ( pacmanPosition, foodGrid ) where
          pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
          capsulePosition: a list of positions (x,y) of the remaining capsules.
-         foodGrid:       a Grid (see game.py) of either True or False, specifying remaining food
-       """
+         foodGridList:  a list of positions (x,y) of the remaining food
+    """
 
     def __init__(self, startingGameState):
         self.start = ( startingGameState.getPacmanPosition(),
-                       startingGameState.getCapsules(), startingGameState.getFood())
-        # self.capsules = startingGameState.getCapsules()
-        # self.foodGrid = startingGameState.getFood()
-        # self.start = startingGameState.getPacmanPosition()
+                       startingGameState.getCapsules(), startingGameState.getFood().asList())
         self.walls = startingGameState.getWalls()
         self.startingGameState = startingGameState
         self._expanded = 0  # DO NOT CHANGE
-        # if start != None: self.startState = start
-        # self.goal = goal
-        self._visited, self._visitedlist, self._expanded = {}, [], 0  # DO NOT CHANGE
 
     def getStartState(self):
         return self.start
 
     def isGoalState(self, state):
-        # x, y = state
-        # if len(self.capsules) > 0:
-        #     if (x, y) in self.capsules:
-        #         self.capsules.remove((x, y))
-        #         return True
-        # elif self.foodGrid.count() > 0:
-        #     if self.foodGrid[x][y]:
-        #         self.foodGrid[x][y] = False
-        #         return True
-        # return len(self.capsules) == 0 and self.foodGrid.count() == 0
-
-
-        # Version2
-        pos, capsules, foodGrid = state
-        return len(capsules) == 0 and foodGrid.count() == 0
+        _, capsules, foodGrid = state
+        return len(capsules) == 0 and len(foodGrid) == 0
 
     def getSuccessors(self, state):
-        "Returns successor states, the actions they require, and a cost of 1."
-        # successors = []
-        # self._expanded += 1  # DO NOT CHANGE
-        # # print("capsules: {}, food count: {} ".format(self.capsules, self.foodGrid.count()) )
-        # for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
-        #     x, y = state
-        #     dx, dy = Actions.directionToVector(direction)
-        #     nextx, nexty = int(x + dx), int(y + dy)
-        #
-        #     if not self.walls[nextx][nexty]:
-        #         if len(self.capsules) == 0:
-        #             successors.append( ((nextx, nexty), direction, 1))
-        #         elif not self.foodGrid[nextx][nexty]:
-        #             successors.append( ((nextx, nexty), direction, 1))
-        #         else:
-        #             continue
+        """Returns successor states, the actions they require, and a cost of 1."""
 
-
-        # Version 2
         successors = []
         self._expanded += 1  # DO NOT CHANGE
         for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
@@ -713,18 +661,18 @@ class CapsuleSearchProblem(search.SearchProblem):
 
             if not self.walls[nextx][nexty]:
                 nextCapsule = [x for x in capsules]
-                nextFood = foodGrid.copy()
-                if len(capsules) > 0 :
-                    if not foodGrid[nextx][nexty]:
+                nextFood = [x for x in foodGrid]
+                if len(capsules) > 0:
+                    if not (nextx, nexty) in nextFood:
                         if (nextx, nexty) in capsules:
                             nextCapsule.remove((nextx, nexty))
                         successors.append( ( ((nextx, nexty), nextCapsule, nextFood), direction, 1) )
                 elif len(capsules) == 0:
-                    nextFood[nextx][nexty] = False
+                    if (nextx, nexty) in nextFood:
+                        nextFood.remove((nextx, nexty))
                     successors.append( ( ((nextx, nexty), nextCapsule, nextFood), direction, 1) )
                 else:
                     continue
-
         return successors
 
     def getCostOfActions(self, actions):
@@ -744,62 +692,147 @@ class CapsuleSearchProblem(search.SearchProblem):
         return cost
 
 
-
 class CapsuleSearchAgent(SearchAgent):
-    "A SearchAgent for CapsuleSearchProblem using Weighted A* and your foodHeuristic"
-    #
-    # def registerInitialState(self, state):
-    #     starttime = time.time()
-    #     self.actions = []
-    #     currentState = state
-    #     nodeSum = 0
-    #
-    #     print("init: ", currentState.getCapsules())
-    #     print("init: ", currentState.getFood().asList())
-    #
-    #     # for capsule in currentState.getCapsules():
-    #     #     capsulePathSegment = self.findPathToCapsules(currentState, capsule)
-    #     #     self.actions += capsulePathSegment
-    #     #     for action in capsulePathSegment:
-    #     #         legal = currentState.getLegalActions()
-    #     #         if action not in legal:
-    #     #             t = (str(action), str(currentState))
-    #     #         currentState = currentState.generateSuccessor(0, action)
-    #     # self.actionIndex = 0
-    #     # print("==========================================================")
-    #     # print("path to caps: ", self.actions)
-    #
-    #     while len(currentState.getCapsules()) > 0 or currentState.getFood().count() > 0:
-    #         nextPathSegment, nodeExpand = self.findPathToOneDot(currentState)
-    #         self.actions += nextPathSegment
-    #         print("=================================")
-    #         print(nextPathSegment)
-    #         print(nodeExpand)
-    #         print("iter: ", currentState.getCapsules())
-    #         print("iter: ", currentState.getFood().asList())
-    #         print("=================================\n")
-    #         nodeSum += nodeExpand
-    #         for action in nextPathSegment:
-    #             legal = currentState.getLegalActions()
-    #             print("legal: ", legal)
-    #             if action not in legal:
-    #                 t = (str(action), str(currentState))
-    #             currentState = currentState.generateSuccessor(0, action)
-    #     self.actionIndex = 0
-    #     print("path: ", self.actions)
-    #     print('Path found with total cost of %d in %.1f seconds' % (len(self.actions), time.time() - starttime))
-    #     print('Search nodes expanded: %d' % nodeSum)
-    #
-    # #
-    # # def findPathToCapsules(self, gameState, capsule):
-    # #     problem = CapsuleSearchProblem(gameState)
-    # #     return search.wastar(problem)
-    #
-    # def findPathToOneDot(self, gameState):
-    #     """
-    #     Returns a path (a list of actions) to the closest dot, starting from
-    #     gameState.
-    #     """
-    #     problem = CapsuleSearchProblem(gameState)
-    #     pathSegment = self.searchFunction(problem)
-    #     return pathSegment, problem._expanded
+    """A SearchAgent for CapsuleSearchProblem"""
+    pass
+
+
+###########################################
+#    Capsule Search Problem (Version2)    #
+###########################################
+class CapsuleSearchProblem2(PositionSearchProblem):
+    """
+       A different Strategy compared to CapsuleSearchProblem
+
+       A capsule search problem associated with finding the a path that collects all of the
+       capsules firstly and food (dots) later on in a Pacman game.
+
+       The Strategy is to decompose the whole search problem into two parts: "search capsules" and
+       "search food" namely.
+
+       A search state in this problem is pacmanPosition: a tuple (x,y) of integers specifying Pacman's position
+       together with problem's own variables: self.capsules and self.foodGrid
+    """
+
+    def __init__(self, startingGameState):
+        self.capsules = startingGameState.getCapsules()
+        self.foodGrid = startingGameState.getFood()
+        self.start = startingGameState.getPacmanPosition()
+        self.walls = startingGameState.getWalls()
+        self.startingGameState = startingGameState
+        self._expanded = 0  # DO NOT CHANGE
+
+    def getStartState(self):
+        return self.start
+
+    def isGoalState(self, state):
+        x, y = state
+        if len(self.capsules) > 0:
+            if (x, y) in self.capsules:
+                self.capsules.remove((x, y))
+                return True
+        elif self.foodGrid.count() > 0:
+            if self.foodGrid[x][y]:
+                self.foodGrid[x][y] = False
+                return True
+        return len(self.capsules) == 0 and self.foodGrid.count() == 0
+
+    def getSuccessors(self, state):
+        "Returns successor states, the actions they require, and a cost of 1."
+        successors = []
+        self._expanded += 1  # DO NOT CHANGE
+        # print("capsules: {}, food count: {} ".format(self.capsules, self.foodGrid.count()) )
+        for direction in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = state
+            dx, dy = Actions.directionToVector(direction)
+            nextx, nexty = int(x + dx), int(y + dy)
+
+            if not self.walls[nextx][nexty]:
+                if len(self.capsules) == 0:
+                    successors.append( ((nextx, nexty), direction, 1))
+                elif not self.foodGrid[nextx][nexty]:
+                    successors.append( ((nextx, nexty), direction, 1))
+                else:
+                    continue
+
+        return successors
+
+
+class CapsuleSearchAgent2(SearchAgent):
+    """
+    Search Agent devoted to "CapsuleSearchProblem2", it carries out the searching tasks, capsules and food subsequently.
+    It returns a list of actions for the searching task.
+    """
+
+    def __init__(self, fn='wastar2', prob='CapsuleSearchProblem2', heuristic='foodHeuristic2'):
+        # Get the search function from the name and heuristic
+        if fn not in dir(search):
+            raise AttributeError(fn + ' is not a search function in search.py.')
+        func = getattr(search, fn)
+        if 'heuristic' not in func.__code__.co_varnames:
+            print('[SearchAgent] using function ' + fn)
+            self.searchFunction = func
+        else:
+            if heuristic in globals().keys():
+                heur = globals()[heuristic]
+            elif heuristic in dir(search):
+                heur = getattr(search, heuristic)
+            else:
+                raise AttributeError(heuristic + ' is not a function in searchAgents.py or search.py.')
+            print('[SearchAgent] using function %s and heuristic %s' % (fn, heuristic))
+            # Note: this bit of Python trickery combines the search algorithm and the heuristic
+            self.searchFunction = lambda x: func(x, heuristic=heur)
+
+        # Get the search problem type from the name
+        if prob not in globals().keys():
+            raise AttributeError(prob + ' is not a search problem type in SearchAgents.py.')
+        self.searchType = globals()[prob]
+        print('[SearchAgent] using problem type ' + prob)
+
+    def registerInitialState(self, state):
+        """
+        The agent should search and eat all capsules before eating any food dot in the maze.
+        One path segment will be generated as long as one dot was eaten.
+
+        """
+        starttime = time.time()
+        self.actions = []
+        currentState = state
+        nodeSum = 0  # all nodes get expanded
+
+        # Part I: Find and eat all capsules first
+        while len(currentState.getCapsules()) > 0:
+            nextPathSegment, nodeExpand = self.findPathToOneDot(currentState)
+            self.actions += nextPathSegment
+            nodeSum += nodeExpand
+            for action in nextPathSegment:
+                legal = currentState.getLegalActions()
+                if action not in legal:
+                    t = (str(action), str(currentState))
+                currentState = currentState.generateSuccessor(0, action)
+
+        # Part II: Find and eat all food dots
+        while currentState.getFood().count() > 0:
+            nextPathSegment, nodeExpand = self.findPathToOneDot(currentState)
+            self.actions += nextPathSegment
+            nodeSum += nodeExpand
+            for action in nextPathSegment:
+                legal = currentState.getLegalActions()
+                if action not in legal:
+                    t = (str(action), str(currentState))
+                currentState = currentState.generateSuccessor(0, action)
+
+        self.actionIndex = 0
+        print('Path found with total cost of %d in %.1f seconds' % (len(self.actions), time.time() - starttime))
+        print('Search nodes expanded: %d' % nodeSum)
+
+    def findPathToOneDot(self, gameState):
+        """
+        Returns a path (a list of actions) to first discovered dot, starting from
+        gameState. (greedy)
+
+        """
+        problem = self.searchType(gameState)
+        pathSegment = self.searchFunction(problem)
+        return pathSegment, problem._expanded
+
