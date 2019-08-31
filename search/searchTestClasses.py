@@ -570,7 +570,6 @@ class HeuristicGrade(testClasses.TestCase):
 
         return problem, state, heuristic
 
-
     def execute(self, grades, moduleDict, solutionDict):
         search = moduleDict['search']
         searchAgents = moduleDict['searchAgents']

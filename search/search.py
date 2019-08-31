@@ -169,12 +169,13 @@ def iterativeDeepeningSearch(problem):
 
     # Retrieve the init state
     # state model ( (position, depth), path, cost)
-    initState = ( (problem.getStartState(), 0) , ['Stop'], 0)
-    limit = 0
+    initState = ( (problem.getStartState(), 1) , ['Stop'], 0)
+    limit = 1
     while True:
         # Initialization each iteration
         open = util.Stack()
         open.push(initState)
+        # currDepth = 1
         closed = {}
 
         while not open.isEmpty():
@@ -184,22 +185,20 @@ def iterativeDeepeningSearch(problem):
             currPath = currState[1]
             currCost = currState[2]
 
-            if problem.isGoalState(currPos):
-                return currPath[1:]
-            else:
-                closed[currPos] = currCost
-
-            successors = problem.getSuccessors(currPos)
-            nextDepth = currDepth + 1
-            if len(successors) > 0 and nextDepth <= limit:
-                for each in successors:
-                    nextCost = currCost + each[2]
-                    if each[0] not in closed.keys() or nextCost < closed[each[0]]:
-                        temp = ( (each[0], nextDepth), currPath + [each[1]], nextCost)
-                        open.push(temp)
+            closed[currPos] = currCost
+            if currDepth <= limit:
+                successors = problem.getSuccessors(currPos)
+                if len(successors) > 0:
+                    nextDepth = currDepth + 1
+                    for each in successors:
+                        nextCost = currCost + each[2]
+                        nextPath = currPath + [each[1]]
+                        if each[0] not in closed.keys() or nextCost < closed[each[0]]:
+                            temp = ( (each[0], nextDepth), nextPath, nextCost)
+                            open.push(temp)
+                        if problem.isGoalState(temp[0][0]):
+                            return nextPath[1:]
         limit += 1
-
-    return False
 
 
 def waStarSearch(problem, heuristic=nullHeuristic):
