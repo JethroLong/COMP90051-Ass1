@@ -461,7 +461,7 @@ def foodHeuristic(state, problem):
     state, capsules, foodGrid = state
 
     h = heuristicGeneral(state, foodGrid)
-    capsuleCoefficient = len(capsules)*0.5 + 1   # this should no less than 1
+    capsuleCoefficient = len(capsules)*0.2 + 1   # this should no less than 1
     return h*capsuleCoefficient
 
 

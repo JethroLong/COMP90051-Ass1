@@ -114,7 +114,6 @@ def depthFirstSearch(problem):
                         open.push(temp)
     return False
 
-
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE IF YOU WANT TO PRACTICE ***"
@@ -144,11 +143,10 @@ def breadthFirstSearch(problem):
                             open.push(temp)
     return False
 
-
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE IF YOU WANT TO PRACTICE ***"
-    util.raiseNotDefined()
+    aStarSearch(problem)
 
 def nullHeuristic(state, problem=None):
     """
@@ -160,7 +158,37 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE IF YOU WANT TO PRACTICE ***"
-    util.raiseNotDefined()
+
+    priorityFunc = lambda x: x[2] + 1*heuristic(x[0], problem)
+
+    # initialize a priority queue
+    open = util.PriorityQueue()
+    closed = []
+
+    # Retrieve the init state
+    init = (problem.getStartState(), ['Stop'], 0)
+    open.push(init, priorityFunc(init))
+    while not open.isEmpty():
+        currNode = open.pop()
+        currState = currNode[0]
+        currPath = currNode[1]
+        currPathCost = currNode[2]
+        if problem.isGoalState(currState):
+            return currPath[1:]
+        else:
+            closed.append(currState)
+        successors = problem.getSuccessors(currState)
+
+        if len(successors) > 0:
+            for each in successors:
+                newPos = each[0]
+                newPathCost = currPathCost + each[2]
+
+                if newPos not in closed:
+                    temp = (each[0], currPath + [each[1]], newPathCost)
+                    open.update(temp, priorityFunc(temp))
+
+    return False
 
 
 def iterativeDeepeningSearch(problem):
