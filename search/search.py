@@ -247,6 +247,9 @@ def waStarSearch(problem, heuristic=nullHeuristic):
         currState = currNode[0]
         currPath = currNode[1]
         currPathCost = currNode[2]
+
+        # h0 = heuristic(currState, problem)
+
         if problem.isGoalState(currState):
             return currPath[1:]
         else:
@@ -255,10 +258,11 @@ def waStarSearch(problem, heuristic=nullHeuristic):
 
         if len(successors) > 0:
             for each in successors:
-                newPos = each[0]
+                newState = each[0]
                 newPathCost = currPathCost + each[2]
-
-                if newPos not in closed:
+                # h1 = heuristic(newState, problem)
+                # print("state {} to {}:  consistent? {}".format(currState[0], newState[0], h0-h1 <= 1))
+                if newState not in closed:
                     temp = (each[0], currPath + [each[1]], newPathCost)
                     open.update(temp, priorityFunc(temp))
 
