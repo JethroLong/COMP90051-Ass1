@@ -203,7 +203,6 @@ def iterativeDeepeningSearch(problem):
         # Initialization each iteration
         open = util.Stack()
         open.push(initState)
-        # currDepth = 1
         closed = {}
 
         while not open.isEmpty():
@@ -238,6 +237,7 @@ def waStarSearch(problem, heuristic=nullHeuristic):
     # initialize a priority queue
     open = util.PriorityQueue()
     closed = []
+    consistencyCheck = []
 
     # Retrieve the init state
     init = (problem.getStartState(), ['Stop'], 0)
@@ -248,9 +248,10 @@ def waStarSearch(problem, heuristic=nullHeuristic):
         currPath = currNode[1]
         currPathCost = currNode[2]
 
-        # h0 = heuristic(currState, problem)
+        h0 = heuristic(currState, problem)
 
         if problem.isGoalState(currState):
+            print("consistent? :", consistencyCheck.count(True) == len(consistencyCheck))
             return currPath[1:]
         else:
             closed.append(currState)
@@ -260,8 +261,8 @@ def waStarSearch(problem, heuristic=nullHeuristic):
             for each in successors:
                 newState = each[0]
                 newPathCost = currPathCost + each[2]
-                # h1 = heuristic(newState, problem)
-                # print("state {} to {}:  consistent? {}".format(currState[0], newState[0], h0-h1 <= 1))
+                h1 = heuristic(newState, problem)
+                consistencyCheck.append(h0-h1 <= 1)
                 if newState not in closed:
                     temp = (each[0], currPath + [each[1]], newPathCost)
                     open.update(temp, priorityFunc(temp))

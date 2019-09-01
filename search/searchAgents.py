@@ -460,14 +460,14 @@ def foodHeuristic(state, problem):
     """
     state, capsules, foodGrid = state
 
-    h = heuristicGeneral(state, foodGrid)
+    h = heuristicGeneral(state, capsules, foodGrid)
     # capsuleCoefficient = len(capsules)*0.2 + 1   # this should no less than 1
     return h
 
 
 def foodHeuristic2(state, problem):
     """
-    Heuristic functiono devoted to "CapsuleSearchProblem2"
+    Heuristic function devoted to "CapsuleSearchProblem2"
     """
     capsules = problem.capsules
     foodGrid = problem.foodGrid
@@ -481,19 +481,19 @@ def foodHeuristic2(state, problem):
     return h
 
 
-def heuristicGeneral(pos, goals):
-    if len(goals) == 0:
-        return 0
-    elif len(goals) == 1:
-        return manhattanDistance(pos, goals[0])
+def heuristicGeneral(pos, capsules, goals):
+    if len(capsules) > 0:
+        nearestCapsule, _ = nearestFurthestHeuristic(pos, capsules)
+        _, furthestFoods = nearestFurthestHeuristic(pos, goals)
+        return nearestCapsule + furthestFoods
     else:
-        distsToPos = []
-        distsBtweenGoals =[]
-        for fstFood in goals:
-            distsToPos.append(manhattanDistance(pos, fstFood))
-            for sndFood in goals:
-                distsBtweenGoals.append(manhattanDistance(fstFood, sndFood))
-        return min(distsToPos) + max(distsBtweenGoals)
+        if len(goals) == 0:
+            return 0
+        elif len(goals) == 1:
+            return manhattanDistance(pos, goals[0])
+        else:
+            nearestToPos, furthestBetweenGoals = nearestFurthestHeuristic(pos, goals)
+            return nearestToPos + furthestBetweenGoals
 
 
 def heuristicGeneral2(pos, goals, gameState):
@@ -508,7 +508,6 @@ def heuristicGeneral2(pos, goals, gameState):
                 dist = mazeDistance(fstFood, sndFood, gameState)
                 if dist != 0: dists.append(dist)
         currentConstCost = max(dists)
-
         nearestGoal, distNearestGoal = nearestUnvisitedGoal(pos, goals, gameState)
         distCombo = currentConstCost + distNearestGoal
         return distCombo
@@ -516,6 +515,16 @@ def heuristicGeneral2(pos, goals, gameState):
 
 def manhattanDistance(start, goal):
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
+
+
+def nearestFurthestHeuristic(pos, goals):
+    distsToPos = []
+    distsBtweenGoals = []
+    for fstFood in goals:
+        distsToPos.append(manhattanDistance(pos, fstFood))
+        for sndFood in goals:
+            distsBtweenGoals.append(manhattanDistance(fstFood, sndFood))
+    return min(distsToPos),  max(distsBtweenGoals)
 
 
 def nearestUnvisitedGoal(pos, goals, gameState):
